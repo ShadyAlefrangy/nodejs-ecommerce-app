@@ -5,8 +5,11 @@
   "main": "server.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.mjs",
-    "start:production": "SET NODE_ENV=production && nodemon server.mjs"
+    "start:dev": "nodemon server.mjs",
+    "start": "SET NODE_ENV=production && nodemon server.mjs"
+  },
+  "engines": {
+    "node": "18.12.0"
   },
   "keywords": [],
   "author": "Shady Alefrangy",
