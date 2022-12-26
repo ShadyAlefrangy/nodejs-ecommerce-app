@@ -8,6 +8,7 @@ import { dbConnect } from "./util/db-connect.mjs";
 import { ApiError } from "./util/apiError.mjs";
 import { globalErrorHandler } from "./middlewares/errorMiddleware.mjs";
 import { mountedRoutes } from "./routes/index.mjs";
+import { webhookCheckout } from "./Services/orderService.mjs";
 // load .env files content into process.env
 dotenv.config();
 const PORT = process.env.PORT || 8000;
@@ -20,6 +21,12 @@ app.options("*", cors());
 app.use(compression());
 // Connect to DB
 dbConnect();
+// webhook checkout
+app.post(
+  "/webhook-checkout",
+  express.raw({ type: "application/json" }),
+  webhookCheckout
+);
 // Middleware
 app.use(express.json());
 app.use(express.static(path.resolve("uploads")));

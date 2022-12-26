@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { Cart } from "../models/cartModel.mjs";
 import { Order } from "../models/orderModel.mjs";
 import { Product } from "../models/productModel.mjs";
+import { User } from "../models/userModel.mjs";
 import { ApiError } from "../util/apiError.mjs";
 import { getAll, getOne } from "./handlerFactory.mjs";
 /* eslint-disable import/prefer-default-export */
@@ -153,4 +154,57 @@ export const checkoutSession = async (req, res, next) => {
   } catch (error) {
     res.status(400).json(error);
   }
+};
+
+const createCardOrder = async (session) => {
+  const cartId = session.client_reference_id;
+  const shippingAddress = session.metadata;
+  const orderPrice = session.display_items[0].amount / 100;
+
+  const cart = await Cart.findById(cartId);
+  const user = await User.findOne({ email: session.customer_email });
+  // create order with default payment method card
+  const order = await Order.create({
+    user: user._id,
+    cartItems: cart.cartItems,
+    shippingAddress: shippingAddress,
+    totalOrderPrice: orderPrice,
+    isPaid: true,
+    paidAt: Date.now(),
+    paymentMethodType: "card",
+  });
+
+  // after creating order, decrement product quantity, increment product sold
+  if (order) {
+    const bulkOption = cart.cartItems.map((item) => ({
+      updateOne: {
+        filter: { _id: item.product },
+        update: { $inc: { quantity: -item.quantity, sold: +item.quantity } },
+      },
+    }));
+    await Product.bulkWrite(bulkOption, {});
+    // 5) clear user cart based on cartId
+    await Cart.findByIdAndDelete(cartId);
+  }
+};
+
+export const webhookCheckout = (req, res, next) => {
+  const sig = req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      "whsec_9YTpgGn1WoMeTkLjDU855o49VnP15S0k"
+    );
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  if (event.type === "checkout.session.completed") {
+    // create order
+    createCardOrder(event.data.object);
+  }
+  res.status(200).json({ received: true });
 };
