@@ -23,7 +23,10 @@
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "express-async-handler": "^1.2.0",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^6.7.0",
     "express-validator": "^6.14.2",
+    "hpp": "^0.2.3",
     "jsonwebtoken": "^8.5.1",
     "mongodb-autoincrement": "^1.0.1",
     "mongoose": "^6.5.3",
@@ -36,7 +39,8 @@
     "simple-mongoose-autoincrement": "^1.2.1",
     "slugify": "^1.6.5",
     "stripe": "^11.4.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "xss-clean": "^0.1.1"
   },
   "devDependencies": {
     "eslint": "^8.23.0",

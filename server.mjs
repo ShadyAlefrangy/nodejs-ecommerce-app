@@ -4,6 +4,10 @@ import * as dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import compression from "compression";
+import rateLimit from "express-rate-limit";
+import hpp from "hpp";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
 import { dbConnect } from "./util/db-connect.mjs";
 import { ApiError } from "./util/apiError.mjs";
 import { globalErrorHandler } from "./middlewares/errorMiddleware.mjs";
@@ -28,12 +32,36 @@ app.post(
   webhookCheckout
 );
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: "20kb" }));
 app.use(express.static(path.resolve("uploads")));
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
   console.log(`mode: ${process.env.NODE_ENV}`);
 }
+// Apply data sanitization
+app.use(mongoSanitize());
+app.use(xss());
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  message:
+    "Too many accounts created from this IP, please try again after 15 minutes",
+});
+
+// Apply the rate limiting middleware to all requests
+app.use("/api", limiter);
+// middleware to protect against HTTP Parameter Pollution attacks
+app.use(
+  hpp({
+    whitelist: [
+      "price",
+      "sold",
+      "quantity",
+      "ratingsAverage",
+      "ratingsQuantity",
+    ],
+  })
+);
 // Routes
 mountedRoutes(app);
 
