@@ -9,9 +9,7 @@ import { getAll, getOne } from "./handlerFactory.mjs";
 
 // middleware to get logged users orders
 
-const stripe = new Stripe(
-  "sk_test_51LRYqYFIFQeo11lsKW6cElnX5sFPUPfOlcXSQQFKEsItg1Kcm2kfHnO45kEyszGbrs4dy7QyhjzL6YDpUm0VZ1Ik00B6NPxE4H"
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET);
 export const getOrdersForLoggedUser = (req, res, next) => {
   if (req.user.role === "user") {
     req.filterObject = { user: req.user._id };
